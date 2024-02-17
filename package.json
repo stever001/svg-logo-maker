@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "@svgdotjs/svg.js": "^3.2.0",
+    "inquirer": "^6.5.2",
+    "svg.js": "^2.7.1",
+    "svgdom": "*"
+  },
+  "name": "svg-logo-maker",
+  "description": "",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
