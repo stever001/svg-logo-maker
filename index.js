@@ -1,130 +1,26 @@
-// const fs = import('fs');
-
-// const inquirerPromise = import('inquirer');
-// const SVG = require('svg.js');
-
-// (async () => {
-//   const inquirerModule = await inquirerPromise;
-//   const inquirer = inquirerModule.default;
-
-//   async function getUserInput() {
-//     const answers = await inquirer.prompt([
-//       {
-//         type: 'input',
-//         name: 'text',
-//         message: 'Enter up to three characters:',
-//         validate: (input) => input.length <= 3,
-//       },
-//       {
-//         type: 'input',
-//         name: 'textColor',
-//         message: 'Enter text color (keyword or hexadecimal):',
-//       },
-//       {
-//         type: 'list',
-//         name: 'shape',
-//         message: 'Choose a shape:',
-//         choices: ['circle', 'triangle', 'square'],
-//       },
-//       {
-//         type: 'input',
-//         name: 'shapeColor',
-//         message: 'Enter shape color (keyword or hexadecimal):',
-//       },
-//     ]);
-
-//     return answers;
-//   }
-
-//   function createSVG(text, textColor, shape, shapeColor) {
-//     const draw = SVG().size(300, 200);
-
-//     // Set up text element
-//     const textElement = draw.text(text).fill(textColor).move(10, 30);
-
-//     // Set up shape element
-//     let shapeElement;
-//     switch (shape) {
-//       case 'circle':
-//         shapeElement = draw.circle(100).fill(shapeColor).move(50, 50);
-//         break;
-//       case 'triangle':
-//         shapeElement = draw.polygon('100,0 50,100 0,0').fill(shapeColor);
-//         break;
-//       case 'square':
-//         shapeElement = draw.rect(100, 100).fill(shapeColor).move(50, 50);
-//         break;
-//       default:
-//         throw new Error('Invalid shape');
-//     }
-
-//     // Save the SVG file
-//     fs.writeFileSync('logo.svg', draw.svg());
-//   }
-
-//   async function main() {
-//     const userInput = await getUserInput();
-//     const { text, textColor, shape, shapeColor } = userInput;
-
-//     createSVG(text, textColor, shape, shapeColor);
-
-//     // Print output message
-//     console.log('Generated logo.svg');
-//   }
-
-//   await main(); // Make sure to await the main function
-// })();
 const fs = require('fs');
+const path = require('path');
 const inquirer = require('inquirer');
 
-class Shape {
-  constructor(color) {
-    this.color = color;
-  }
+// Require the shape modules from the lib directory
+const Circle = require('./lib/circle');
+const Triangle = require('./lib/triangle');
+const Square = require('./lib/square');
 
-  setColor(color) {
-    this.color = color;
-  }
-
-  getColor() {
-    return this.color;
-  }
-
-  render() {
-    throw new Error('Method "render()" must be implemented.');
-  }
-}
-
-class Circle extends Shape {
-  render() {
-    return `<circle cx="100" cy="100" r="50" fill="${this.color}" />`;
-  }
-}
-
-class Triangle extends Shape {
-  render() {
-    return `<polygon points="150,50 100,150 200,150" fill="${this.color}" />`;
-  }
-}
-
-class Square extends Shape {
-  render() {
-    return `<rect width="100" height="100" fill="${this.color}" x="100" y="50"/>`;
-  }
-}
-
+// Function to prompt user for input
 async function getUserInput() {
   const answers = await inquirer.prompt([
     {
       type: 'input',
       name: 'text',
       message: 'Enter up to three characters:',
-      validate: (input) => input.length <= 3,
+      validate: input => input.length <= 3 && input.length > 0,
     },
     {
       type: 'input',
       name: 'textColor',
       message: 'Enter text color (keyword or hexadecimal):',
+      validate: input => /^#?([a-f0-9]{6}|[a-f0-9]{3})$/i.test(input) || /^[a-zA-Z]+$/i.test(input),
     },
     {
       type: 'list',
@@ -136,12 +32,14 @@ async function getUserInput() {
       type: 'input',
       name: 'shapeColor',
       message: 'Enter shape color (keyword or hexadecimal):',
+      validate: input => /^#?([a-f0-9]{6}|[a-f0-9]{3})$/i.test(input) || /^[a-zA-Z]+$/i.test(input),
     },
   ]);
 
   return answers;
 }
 
+// Function to create SVG content
 function createSVG(text, textColor, shapeType, shapeColor) {
   let shape;
   switch (shapeType) {
@@ -158,20 +56,34 @@ function createSVG(text, textColor, shapeType, shapeColor) {
       throw new Error('Invalid shape');
   }
 
+ // Adjust the coordinates for the text to center it at (150, 100)
+  // The font-size and y-coordinate are adjusted for vertical centering
   const svgContent = `
-    <svg width="300px" height="200px" xmlns="http://www.w3.org/2000/svg">
+    <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
       ${shape.render()}
-      <text x="100px" y="200px" fill="${textColor}">${text}</text>
+      <text x="150" y="100" fill="${textColor}" font-family="Verdana" font-size="35" text-anchor="middle" dominant-baseline="middle">${text}</text>
     </svg>
   `;
+  
+  const outputPath = './examples/logo.svg';
 
-  fs.writeFileSync('logo.svg', svgContent);
+  
+  // Ensure the /examples directory exists
+const dir = path.dirname(outputPath);
+if (!fs.existsSync(dir)){
+  fs.mkdirSync(dir, { recursive: true });
 }
 
+  fs.writeFileSync('./examples/logo.svg', svgContent);
+}
+
+// Main function to run the application
 async function main() {
-  const { text, textColor, shape, shapeColor } = await getUserInput();
+  const userInput = await getUserInput();
+  const { text, textColor, shape, shapeColor } = userInput;
   createSVG(text, textColor, shape, shapeColor);
   console.log('Generated logo.svg');
 }
 
 main();
+
